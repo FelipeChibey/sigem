@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model NaveNodriza {
+  oid     Int       @id @default(autoincrement())
+  nombre  String
+  // Relaciones 1:N con Aeronave (origen y destino)
+  aeronavesOrigen  Aeronave[] @relation("AeronaveOrigen")
+  aeronavesDestino Aeronave[] @relation("AeronaveDestino")
+  @@map("nave_nodriza")
+}
+
+model Aeronave {
+  oid             Int          @id @default(autoincrement())
+  nombre          String
+  capacidadMaxima Int
+
+  // Relaciones con NaveNodriza como origen y destino
+  origenId  Int
+  origen    NaveNodriza @relation("AeronaveOrigen", fields: [origenId], references: [oid])
+  destinoId Int
+  destino   NaveNodriza @relation("AeronaveDestino", fields: [destinoId], references: [oid])
+
+  // Relaciones con Pasajero y Revision
+  pasajeros Pasajero[]
+  revisiones Revision[]
+
+  @@map("aeronave")
+}
+
+model Pasajero {
+  oid      Int       @id @default(autoincrement())
+  nombre   String
+  aeronaveId Int? // pasajero puede estar o no a bordo
+  aeronave  Aeronave? @relation(fields: [aeronaveId], references: [oid])
+
+  // N:M con Revisión via tabla de unión
+  revisiones RevisionesPasajeros[]
+
+  @@map("pasajero")
+}
+
+model Revision {
+  oid           Int       @id @default(autoincrement())
+  nombreRevisor String
+  fecha         DateTime
+  aeronaveId    Int
+  aeronave      Aeronave  @relation(fields: [aeronaveId], references: [oid])
+
+  // N:M con Pasajero via tabla de unión
+  pasajeros RevisionesPasajeros[]
+
+  // Restricción única: una revisión por día por aeronave
+  @@unique([aeronaveId, fecha])
+  @@map("revision")
+}
+
+model RevisionesPasajeros {
+  revisionId Int
+  pasajeroId Int
+  revision   Revision @relation(fields: [revisionId], references: [oid])
+  pasajero   Pasajero @relation(fields: [pasajeroId], references: [oid])
+
+  @@id([revisionId, pasajeroId])
+  @@map("revision_pasajero")
+}
