@@ -32,7 +32,7 @@ export default async function Page({ params }: Props) {
             </tr>
           </thead>
           <tbody>
-            {aeronave.pasajeros?.map((p) => (
+            {aeronave.pasajeros?.map((p: { oid: number; nombre: string }) => (
               <tr key={p.oid}>
                 <td className="p-2 border">{p.oid}</td>
                 <td className="p-2 border">{p.nombre}</td>
